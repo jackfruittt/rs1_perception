@@ -10,14 +10,27 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
-  <depend>sensor_msgs</depend>
+  <depend>rclcpp_components</depend>
   <depend>geometry_msgs</depend>
   <depend>std_msgs</depend>
   <depend>ament_cmake</depend>
-  <depend>rclcpp_components</depend>
+  <depend>nav_msgs</depend>
+  <depend>tf2_geometry_msgs</depend>
+  
+  <!-- Dependencies from apriltag_detector -->
+  <depend>apriltag_msgs</depend>
+  <depend>cv_bridge</depend>
+  <depend>image_transport</depend>
+  <depend>pluginlib</depend>
+  <depend>sensor_msgs</depend>
+
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
+  <test_depend>ament_cmake_clang_format</test_depend>
+
+
+  <buildtool_depend>ros_environment</buildtool_depend>  <!-- ROS_VERSION + ROS_DISTRO -->
 
   <export>
     <build_type>ament_cmake</build_type>
