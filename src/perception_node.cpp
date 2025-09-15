@@ -28,6 +28,10 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
 #include <std_msgs/msg/string.hpp> 
+#include <sensor_msgs/msg/image.hpp>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+
 
 namespace apriltag_detector
 {
@@ -84,7 +88,7 @@ DetectorComponent::DetectorComponent(const rclcpp::NodeOptions & options)
 
   // tag publisher, custom message = AprilTagArray
   detect_pub_ = this->create_publisher<ApriltagArray>(
-    "tags", rclcpp::QoS(100), pub_options);
+    "/rs1_drone_1/tags", rclcpp::QoS(100), pub_options);
 
 #ifndef USE_MATCHED_EVENTS
   // Since early ROS2 does not call back when subscribers come and go
@@ -172,8 +176,11 @@ void DetectorComponent::subscriptionCheckTimerExpired()
   }
 }
 
-void DetectorComponent::callback(
-  const sensor_msgs::msg::Image::ConstSharedPtr & msg)
+/*
+  This image callback handles the apriltag detection using apriltag_detector
+  It subscribes to the front camera of the drone -- Check subscribe function
+*/
+void DetectorComponent::callback(const sensor_msgs::msg::Image::ConstSharedPtr & msg)
 {
   num_messages_++;
   if (detect_pub_->get_subscription_count() != 0) {
@@ -192,11 +199,48 @@ void DetectorComponent::callback(
       RCLCPP_WARN(get_logger(), "cannot convert image to mono!");
       return;
     }
+    // Create apriltag array message
     auto array_msg = std::make_unique<apriltag_msgs::msg::AprilTagDetectionArray>();
+
+    // Detect tag
     detector_->detect(cvImg->image, array_msg.get());
+
+    /* ------------------- Estimate Scenario Tag Depth START --------------------------------*/
+    // Do "Scenario Location" Estimation Here using corners from array message
+    // From AprilTagDetection.msg
+    // Point[4] corners                # corners of tag ((x1,y1),(x2,y2),...)
+    if(array_msg && !array_msg->detections.empty())
+    {
+      std::vector<cv::Point2f> corner_points;
+      for (int i = 0; i < 4; i++)
+      {
+        cv::Point2f corner(
+            array_msg->detections[0].corners[i].x,
+            array_msg->detections[0].corners[i].y
+        );
+        corner_points.push_back(corner);
+      }
+      if(!corner_points.empty())
+      {
+
+        for (size_t i = 0; i < corner_points.size(); i++) 
+        {
+          /*
+            focal_frontcam = 185.7px
+            z_depth = f/y1 - y4, since cube is 1x1x1m H = 1m therefore its just z_depth=f/(y1-y4)
+          */
+          z_depth = 185.7/(corner_points[0].y - corner_points[3].y);
+          
+          // Debug z_depth
+          // RCLCPP_INFO_STREAM(this->get_logger(), "z_depth: " << z_depth << '\n');
+        }
+      }
+    }
+    /* ------------------- Estimate Scenario Tag Depth END --------------------------------*/
+
+    // Update message and publish
     array_msg->header = msg->header;
     num_tags_detected_ += array_msg->detections.size();
-
     detect_pub_->publish(std::move(array_msg));
     }
 }
@@ -210,38 +254,86 @@ void DetectorComponent::setup_drone_subpub(int drone_id)
     odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
         current_topic_odom_, 10, std::bind(&DetectorComponent::odom_callback, this, std::placeholders::_1));
     
+    // TODO: Adjust for multidrone use
     detection_sub_ = this->create_subscription<apriltag_msgs::msg::AprilTagDetectionArray>(
-        "/tags",10,std::bind(&DetectorComponent::tag_callback, this, std::placeholders::_1));
+        "/rs1_drone_1/tags",10,std::bind(&DetectorComponent::tag_callback, this, std::placeholders::_1));
   
-    scenario_detection_pub_ = this->create_publisher<std_msgs::msg::String>("/scenario_detection",10);
+    // TODO: Adjust for multidrone use
+    scenario_detection_pub_ = this->create_publisher<std_msgs::msg::String>("/rs1_drone_1/scenario_detection",10);
+    
     // Adjust for multi_drone spawn -- This is to send the image of the scenario captured
-    // img_pub_ = image_transport::create_publisher(this, "/scenario/image");
+    scenario_image_pub_ = std::make_shared<image_transport::Publisher>(
+        image_transport::create_publisher(this, "/rs1_drone_1/scenario_img"));
     
 }
 
 void DetectorComponent::odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
     drone_odom_ = msg;
+
+    // Added Debug message for drone_odom_, orientation xyzw is all 0?
+    RCLCPP_INFO_STREAM(this->get_logger(), 
+    "Received odom - Position: (" << 
+    msg->pose.pose.position.x << ", " <<
+    msg->pose.pose.position.y << ", " <<
+    msg->pose.pose.position.z << ") Orientation: (" <<
+    msg->pose.pose.orientation.x << ", " <<
+    msg->pose.pose.orientation.y << ", " <<
+    msg->pose.pose.orientation.z << ", " <<
+    msg->pose.pose.orientation.w << ")");
 }
 
 // Callback function to get tag id based on what is detected
 void DetectorComponent::tag_callback(const apriltag_msgs::msg::AprilTagDetectionArray::SharedPtr msg)
 {
-    current_tag_ = msg;
-    
+    current_tag_ = msg;  
+
     // Check if there are any detections
     if (!current_tag_->detections.empty()) {
         // Access the first detection's id
         tag_id = current_tag_->detections[0].id;
-        // RCLCPP_INFO(this->get_logger(), "Published tag ID: %d to /scenario_detection", tag_id); // DEBUG MSG
-        // scenario_msg_.data = std::to_string(tag_id);
-        scenario_msg_.data = std::to_string(tag_id) + "," + // Replace this with scenario name - need to store id number to scenario name - struct?
-                           std::to_string(drone_odom_->pose.pose.position.x) + "," + // drone position xyz
-                           std::to_string(drone_odom_->pose.pose.position.y) + "," +
-                           std::to_string(drone_odom_->pose.pose.position.z) + "," +
-                           "respond:1/0"; // Can drone respond? true or false (1/0)
+        Scenario scenario = static_cast<Scenario>(tag_id);
+        const char* scenarioStr = ScenarioToString(scenario);
 
+        // TO-DO: Need to adjust whether its a +/- x or +/- y depending on drone yaw
+        scenario_msg_.data = std::string(scenarioStr) + "," + 
+                             std::to_string(drone_odom_->pose.pose.position.x + z_depth) + "," + // drone position xyz with scenario offset
+                             std::to_string(drone_odom_->pose.pose.position.y) + "," +
+                             std::to_string(drone_odom_->pose.pose.position.z) + "," +
+                             "respond:1/0"; // Can drone respond? true or false (1/0)
+
+        // Show what bottom camera sees when "scenario" is detected -- Adjust for multidrone use
+        scenario_image_sub_ = std::make_shared<image_transport::Subscriber>(
+            image_transport::create_subscription(
+                this, "/rs1_drone_1/bottom/image", 
+                std::bind(&DetectorComponent::image_callback, this, std::placeholders::_1),
+                "raw"));
+        
         scenario_detection_pub_->publish(scenario_msg_); // Publish tag id detected
+    }
+}
+
+// Bottom Image View Callback
+void DetectorComponent::image_callback(const sensor_msgs::msg::Image::ConstSharedPtr& msg)
+{
+  // Publish last received image message from drone bottom camera
+  scenario_image_pub_->publish(msg);
+
+  // Unsubscribe from bottom drone camera to avoid sending unrelated image stream 
+  scenario_image_sub_->shutdown();
+}
+
+// Add more Scenarios Here depending on environment and tag id
+const char* DetectorComponent::ScenarioToString(Scenario scenario){
+    switch (scenario) {
+        case STRANDED_HIKER:
+            return "STRANDED_HIKER";
+        case WILDFIRE:
+            return "WILDFIRE";
+        case DEBRIS_OBSTRUCTION:
+            return "DEBRIS_OBSTRUCTION";
+        default:
+            return "UNKNOWN";
     }
 }
 
