@@ -77,6 +77,7 @@ ament_target_dependencies(rs1_perception
 "cv_bridge"
 "image_transport"
 "pluginlib"
+"tf2"
 )
 
 # NODE ---- Adjusted for rs1_perception, but is basically AprilTag_Detector

@@ -68,25 +68,38 @@ private:
 
   /* -------------------START Not from original Apriltag detector_component.hpp------------------------- */
   
+  // Add more Scenarios Here depending on environment and tag id
+  enum Scenario {
+    STRANDED_HIKER = 0,
+    WILDFIRE = 1,
+    DEBRIS_OBSTRUCTION = 2
+  };
+
   // Added Variables and Functions for drone swarm handling
   void setup_drone_subpub(int drone_id);
   void switch_drone(int drone_id);
   void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
   void tag_callback(const apriltag_msgs::msg::AprilTagDetectionArray::SharedPtr msg);
+  void image_callback(const sensor_msgs::msg::Image::ConstSharedPtr& msg);
+
+  const char* ScenarioToString(Scenario scenario);
  
   int drone_count_; // Input parameter passed in to the constructor from the launch
   int current_drone_;
   int tag_id;
   nav_msgs::msg::Odometry::SharedPtr drone_odom_;
   apriltag_msgs::msg::AprilTagDetectionArray::SharedPtr current_tag_;
+  float z_depth;
 
   // ROS2 Subscribers 
   rclcpp::Subscription<apriltag_msgs::msg::AprilTagDetectionArray>::SharedPtr detection_sub_; // Detect /tags message 
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_; // For saving xyzrpy data
+  std::shared_ptr<image_transport::Subscriber> scenario_image_sub_;
+
   
   // ROS2 Publishers
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr scenario_detection_pub_; // Publish Scenario name, Severity Rating, Drone odom, Bool drone can respond? 
-  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr img_pub_; // Publish image topic of bottom camera when tag detected
+  std::shared_ptr<image_transport::Publisher> scenario_image_pub_;
 
   // msgs
   sensor_msgs::msg::Image::SharedPtr img_msg_;
@@ -95,6 +108,7 @@ private:
   // To Switch topics
   std::string current_topic_img_;
   std::string current_topic_odom_;
+
   
   /* -------------------END Not from original Apriltag detector_component.hpp------------------------- */
 
