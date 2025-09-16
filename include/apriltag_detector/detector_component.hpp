@@ -22,6 +22,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
+#include <sensor_msgs/msg/imu.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <tf2/utils.hpp>
@@ -81,6 +82,7 @@ private:
   void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
   void tag_callback(const apriltag_msgs::msg::AprilTagDetectionArray::SharedPtr msg);
   void image_callback(const sensor_msgs::msg::Image::ConstSharedPtr& msg);
+  void imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg);
 
   const char* ScenarioToString(Scenario scenario);
  
@@ -88,12 +90,15 @@ private:
   int current_drone_;
   int tag_id;
   nav_msgs::msg::Odometry::SharedPtr drone_odom_;
+  sensor_msgs::msg::Imu::SharedPtr drone_imu_;
   apriltag_msgs::msg::AprilTagDetectionArray::SharedPtr current_tag_;
   float z_depth;
 
   // ROS2 Subscribers 
   rclcpp::Subscription<apriltag_msgs::msg::AprilTagDetectionArray>::SharedPtr detection_sub_; // Detect /tags message 
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_; // For saving xyzrpy data
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_; // For saving xyz data
+  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_; // For saving rpy data
+
   std::shared_ptr<image_transport::Subscriber> scenario_image_sub_;
 
   
@@ -108,6 +113,7 @@ private:
   // To Switch topics
   std::string current_topic_img_;
   std::string current_topic_odom_;
+  std::string current_topic_imu_;
 
   
   /* -------------------END Not from original Apriltag detector_component.hpp------------------------- */
