@@ -249,10 +249,14 @@ void DetectorComponent::callback(const sensor_msgs::msg::Image::ConstSharedPtr &
 void DetectorComponent::setup_drone_subpub(int drone_id)
 {
     current_topic_odom_ = "/rs1_drone_" + std::to_string(drone_id) + "/odom";
+    current_topic_imu_ = "/rs1_drone_" + std::to_string(drone_id) + "/imu";
     
     // Create/recreate publishers and subscribers
     odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
         current_topic_odom_, 10, std::bind(&DetectorComponent::odom_callback, this, std::placeholders::_1));
+    
+    imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(
+        current_topic_imu_, 10, std::bind(&DetectorComponent::imu_callback, this, std::placeholders::_1));
     
     // TODO: Adjust for multidrone use
     detection_sub_ = this->create_subscription<apriltag_msgs::msg::AprilTagDetectionArray>(
@@ -272,21 +276,61 @@ void DetectorComponent::odom_callback(const nav_msgs::msg::Odometry::SharedPtr m
     drone_odom_ = msg;
 
     // Added Debug message for drone_odom_, orientation xyzw is all 0?
-    RCLCPP_INFO_STREAM(this->get_logger(), 
-    "Received odom - Position: (" << 
-    msg->pose.pose.position.x << ", " <<
-    msg->pose.pose.position.y << ", " <<
-    msg->pose.pose.position.z << ") Orientation: (" <<
-    msg->pose.pose.orientation.x << ", " <<
-    msg->pose.pose.orientation.y << ", " <<
-    msg->pose.pose.orientation.z << ", " <<
-    msg->pose.pose.orientation.w << ")");
+    // RCLCPP_INFO_STREAM(this->get_logger(), 
+    // "Received odom - Position: (" << 
+    // msg->pose.pose.position.x << ", " <<
+    // msg->pose.pose.position.y << ", " <<
+    // msg->pose.pose.position.z << ") Orientation: (" <<
+    // msg->pose.pose.orientation.x << ", " <<
+    // msg->pose.pose.orientation.y << ", " <<
+    // msg->pose.pose.orientation.z << ", " <<
+    // msg->pose.pose.orientation.w << ")");
+}
+
+void DetectorComponent::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg)
+{
+    drone_imu_ = msg;
+    // RCLCPP_INFO_STREAM(this->get_logger(), 
+    // "Received imu - Orientation: (" <<
+    // msg->orientation.x << ", " <<
+    // msg->orientation.y << ", " <<
+    // msg->orientation.z << ", " <<
+    // msg->orientation.w << ")");
 }
 
 // Callback function to get tag id based on what is detected
 void DetectorComponent::tag_callback(const apriltag_msgs::msg::AprilTagDetectionArray::SharedPtr msg)
 {
-    current_tag_ = msg;  
+    current_tag_ = msg;
+
+    // rpy values for orientation
+    double roll = 0.0;
+    double pitch = 0.0;
+    double yaw = 0.0;  
+
+    double tolerance = 0.5;
+    float adjusted_x = drone_odom_->pose.pose.position.x; // These gets adjusted below based on yaw
+    float adjusted_y = drone_odom_->pose.pose.position.y;
+
+    // Get drone yaw
+    if (drone_imu_) {
+        tf2::Quaternion q(
+            drone_imu_->orientation.x,
+            drone_imu_->orientation.y,
+            drone_imu_->orientation.z,
+            drone_imu_->orientation.w);
+        tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
+        
+    } else {
+        RCLCPP_WARN(this->get_logger(), "No odometry data available");
+    }
+
+    // TO-DO: Tidy this up if possible, rn just hardcoded values 
+    // Apply z_depth to either x or y position based on drone yaw
+    if(yaw >= 0-tolerance && yaw <= 0+tolerance) adjusted_x = drone_odom_->pose.pose.position.x + z_depth;
+    if(yaw >= 3.14-tolerance && yaw <= 3.14+tolerance) adjusted_x = drone_odom_->pose.pose.position.x - z_depth; 
+    if(yaw >= 1.57-tolerance && yaw <= 1.57+tolerance) adjusted_y = drone_odom_->pose.pose.position.y + z_depth; 
+    if(yaw >= -1.57-tolerance && yaw <= -1.57+tolerance) adjusted_y = drone_odom_->pose.pose.position.y - z_depth; 
 
     // Check if there are any detections
     if (!current_tag_->detections.empty()) {
@@ -295,11 +339,11 @@ void DetectorComponent::tag_callback(const apriltag_msgs::msg::AprilTagDetection
         Scenario scenario = static_cast<Scenario>(tag_id);
         const char* scenarioStr = ScenarioToString(scenario);
 
-        // TO-DO: Need to adjust whether its a +/- x or +/- y depending on drone yaw
         scenario_msg_.data = std::string(scenarioStr) + "," + 
-                             std::to_string(drone_odom_->pose.pose.position.x + z_depth) + "," + // drone position xyz with scenario offset
-                             std::to_string(drone_odom_->pose.pose.position.y) + "," +
+                             std::to_string(adjusted_x) + "," + 
+                             std::to_string(adjusted_y) + "," +
                              std::to_string(drone_odom_->pose.pose.position.z) + "," +
+                             std::to_string(yaw) + "," +
                              "respond:1/0"; // Can drone respond? true or false (1/0)
 
         // Show what bottom camera sees when "scenario" is detected -- Adjust for multidrone use
