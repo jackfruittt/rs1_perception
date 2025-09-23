@@ -24,18 +24,6 @@ def generate_launch_description():
         description='Number of Drones Available'
     )
 
-    # apriltag_detector_node = Node(
-    #     package='apriltag_detector',
-    #     executable='apriltag_detector_node',
-    #     parameters=[{
-    #         'family': 'tag36h11',
-    #         'max_hamming': 2,
-    #         'quad_decimate': 1.0,
-    #         'quad_sigma': 0.0,
-    #         'type': LaunchConfiguration('type')
-    #     }],
-    # )
-
 # Apriltag node adapted for multi-drone use
     perception_node = Node(
         package='rs1_perception',
@@ -51,7 +39,6 @@ def generate_launch_description():
     ld = LaunchDescription([
         detector_type_arg,
         drone_count_arg,
-        # apriltag_detector_node,
         perception_node
     ])
 

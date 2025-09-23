@@ -39,7 +39,7 @@ namespace apriltag_detector
 DetectorComponent::DetectorComponent(const rclcpp::NodeOptions & options)
 : Node("detector", rclcpp::NodeOptions(options).automatically_declare_parameters_from_overrides(true)), detector_loader_("apriltag_detector", "apriltag_detector::Detector")
 {
-  // Adjust this function to handle multiple drones
+  // TO-DO: Adjust this function to handle multiple drones, currently just sets up for 1 drone
   setup_drone_subpub(1);
 
   // Detector type parameter
@@ -129,7 +129,7 @@ static const rmw_qos_profile_t & convert_profile(const rmw_qos_profile_t & p)
 }
 #endif
 
-// Subscribe to image topic -- Original 
+// Subscribe to image topic 
 void DetectorComponent::subscribe()
 {
   const auto profile = string_to_profile(image_qos_profile_);
@@ -155,12 +155,14 @@ void DetectorComponent::subscribe()
   is_subscribed_ = true;
 }
 
+// Unsubscribe from image topic
 void DetectorComponent::unsubscribe()
 {
   image_sub_->shutdown();
   is_subscribed_ = false;
 }
 
+// Check subscribers
 void DetectorComponent::subscriptionCheckTimerExpired()
 {
   if (detect_pub_->get_subscription_count()) {
@@ -271,6 +273,7 @@ void DetectorComponent::setup_drone_subpub(int drone_id)
     
 }
 
+// Callback function to get odom data
 void DetectorComponent::odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
     drone_odom_ = msg;
@@ -287,6 +290,7 @@ void DetectorComponent::odom_callback(const nav_msgs::msg::Odometry::SharedPtr m
     // msg->pose.pose.orientation.w << ")");
 }
 
+// Callback function to get imu data for orientation
 void DetectorComponent::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg)
 {
     drone_imu_ = msg;
@@ -325,8 +329,10 @@ void DetectorComponent::tag_callback(const apriltag_msgs::msg::AprilTagDetection
         RCLCPP_WARN(this->get_logger(), "No odometry data available");
     }
 
-    // TO-DO: Tidy this up if possible, rn just hardcoded values 
-    // Apply z_depth to either x or y position based on drone yaw
+    /*
+      TO-DO: Tidy this up if possible, rn just hardcoded values 
+      Apply z_depth to either x or y position based on drone yaw
+    */
     if(yaw >= 0-tolerance && yaw <= 0+tolerance) adjusted_x = drone_odom_->pose.pose.position.x + z_depth;
     if(yaw >= 3.14-tolerance && yaw <= 3.14+tolerance) adjusted_x = drone_odom_->pose.pose.position.x - z_depth; 
     if(yaw >= 1.57-tolerance && yaw <= 1.57+tolerance) adjusted_y = drone_odom_->pose.pose.position.y + z_depth; 
@@ -339,12 +345,13 @@ void DetectorComponent::tag_callback(const apriltag_msgs::msg::AprilTagDetection
         Scenario scenario = static_cast<Scenario>(tag_id);
         const char* scenarioStr = ScenarioToString(scenario);
 
+        // TO-DO: Add severity rating based on scenario detected. 
         scenario_msg_.data = std::string(scenarioStr) + "," + 
                              std::to_string(adjusted_x) + "," + 
                              std::to_string(adjusted_y) + "," +
                              std::to_string(drone_odom_->pose.pose.position.z) + "," +
-                             std::to_string(yaw) + "," +
-                             "respond:1/0"; // Can drone respond? true or false (1/0)
+                             std::to_string(yaw) + "," + // Can keep this to show drone heading in gui if needed.
+                             "respond:1/0"; // Can drone respond? true or false (1/0) -- Still need to implement this
 
         // Show what bottom camera sees when "scenario" is detected -- Adjust for multidrone use
         scenario_image_sub_ = std::make_shared<image_transport::Subscriber>(
@@ -357,7 +364,7 @@ void DetectorComponent::tag_callback(const apriltag_msgs::msg::AprilTagDetection
     }
 }
 
-// Bottom Image View Callback
+// Callback function to get image from bottom camera
 void DetectorComponent::image_callback(const sensor_msgs::msg::Image::ConstSharedPtr& msg)
 {
   // Publish last received image message from drone bottom camera
