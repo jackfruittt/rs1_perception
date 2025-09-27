@@ -69,7 +69,7 @@ sudo apt install ros-humble-apriltag-detector ros-humble-apriltag-detector-mit r
 1. Clone this package into your ROS2 workspace:
 ```bash
 cd ~/your_ws/src
-git clone <repository_url> rs1_perception
+git clone https://github.com/jackfruittt/rs1_perception.git
 ```
 
 2. Build the package:
