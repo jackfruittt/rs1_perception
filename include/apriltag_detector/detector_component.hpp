@@ -22,11 +22,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
-#include <sensor_msgs/msg/imu.hpp>
-#include <nav_msgs/msg/odometry.hpp>
-#include <std_msgs/msg/string.hpp>
-#include <tf2/utils.hpp>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+
+
 
 namespace apriltag_detector
 {
@@ -67,56 +64,8 @@ private:
   pluginlib::ClassLoader<apriltag_detector::Detector> detector_loader_;
   std::shared_ptr<apriltag_detector::Detector> detector_;
 
-  /* -------------------START Not from original Apriltag detector_component.hpp------------------------- */
-  
-  // Add more Scenarios Here depending on environment and tag id
-  enum Scenario {
-    STRANDED_HIKER = 0,
-    WILDFIRE = 1,
-    DEBRIS_OBSTRUCTION = 2
-  };
-
-  // Added Variables and Functions for drone swarm handling
-  void setup_drone_subpub(int drone_id);
-  void switch_drone(int drone_id);
-  void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
-  void tag_callback(const apriltag_msgs::msg::AprilTagDetectionArray::SharedPtr msg);
-  void image_callback(const sensor_msgs::msg::Image::ConstSharedPtr& msg);
-  void imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg);
-
-  const char* ScenarioToString(Scenario scenario);
- 
-  int drone_count_; // Input parameter passed in to the constructor from the launch
-  int current_drone_;
-  int tag_id;
-  nav_msgs::msg::Odometry::SharedPtr drone_odom_;
-  sensor_msgs::msg::Imu::SharedPtr drone_imu_;
-  apriltag_msgs::msg::AprilTagDetectionArray::SharedPtr current_tag_;
-  float z_depth;
-
-  // ROS2 Subscribers 
-  rclcpp::Subscription<apriltag_msgs::msg::AprilTagDetectionArray>::SharedPtr detection_sub_; // Detect /tags message 
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_; // For saving xyz data
-  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_; // For saving rpy data
-
-  std::shared_ptr<image_transport::Subscriber> scenario_image_sub_;
-
-  
-  // ROS2 Publishers
-  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr scenario_detection_pub_; // Publish Scenario name, Severity Rating, Drone odom, Bool drone can respond? 
-  std::shared_ptr<image_transport::Publisher> scenario_image_pub_;
-
-  // msgs
-  sensor_msgs::msg::Image::SharedPtr img_msg_;
-  std_msgs::msg::String scenario_msg_;
-
-  // To Switch topics
-  std::string current_topic_img_;
-  std::string current_topic_odom_;
-  std::string current_topic_imu_;
-
-  
-  /* -------------------END Not from original Apriltag detector_component.hpp------------------------- */
+  // Configuration parameters for dynamic namespace support
+  std::string drone_namespace_;                    ///< ROS namespace for this drone
 
 };
 
