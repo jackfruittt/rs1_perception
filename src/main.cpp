@@ -16,11 +16,11 @@
 /**
  * @file main.cpp
  * @brief Main executable for perception node
- * 
+ *
  * This file contains modified code originally from apriltag_detector.
  * Modification: Support for our custom node (variation of the original)
- * 
- * 
+ *
+ *
  * @author Jackson Russell
  * @author Ace Viray
  * @date Oct-2025
@@ -30,19 +30,17 @@
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 
-int main(int argc, char** argv)
-{
-  rclcpp::init(argc, argv);
-  
-  auto node = std::make_shared<rs1_perception::PerceptionNode>(
-      rclcpp::NodeOptions());
-      
-  RCLCPP_INFO(node->get_logger(), "Starting RS1 Perception Node...");
-  
-  rclcpp::spin(node);
-  
-  RCLCPP_INFO(node->get_logger(), "Shutting down RS1 Perception Node");
-  rclcpp::shutdown();
-  
-  return 0;
+int main(int argc, char** argv) {
+    rclcpp::init(argc, argv);
+
+    auto node = std::make_shared<rs1_perception::PerceptionNode>(rclcpp::NodeOptions());
+
+    RCLCPP_INFO(node->get_logger(), "Starting RS1 Perception Node...");
+
+    rclcpp::spin(node);
+
+    RCLCPP_INFO(node->get_logger(), "Shutting down RS1 Perception Node");
+    rclcpp::shutdown();
+
+    return 0;
 }

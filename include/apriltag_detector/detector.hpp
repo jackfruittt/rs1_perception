@@ -19,26 +19,23 @@
 #include <apriltag_msgs/msg/april_tag_detection_array.hpp>
 #include <string>
 
-namespace cv
-{
+namespace cv {
 class Mat;
 }
 
-namespace apriltag_detector
-{
-class Detector
-{
-public:
-  using ApriltagArray = apriltag_msgs::msg::AprilTagDetectionArray;
-  virtual ~Detector() {}
-  virtual void detect(const cv::Mat & img, ApriltagArray * tags) = 0;
-  virtual void setFamily(const std::string & fam) = 0;
-  virtual void setBlackBorder(int width) = 0;
-  virtual void setDecimateFactor(double factor) = 0;
-  virtual void setQuadSigma(double blur) = 0;
-  virtual void setNumberOfThreads(int i) = 0;
-  virtual void setMaxAllowedHammingDistance(int) = 0;
-  virtual const std::string & getFamily() const = 0;
+namespace apriltag_detector {
+class Detector {
+  public:
+    using ApriltagArray = apriltag_msgs::msg::AprilTagDetectionArray;
+    virtual ~Detector() {}
+    virtual void detect(const cv::Mat & img, ApriltagArray * tags) = 0;
+    virtual void setFamily(const std::string & fam) = 0;
+    virtual void setBlackBorder(int width) = 0;
+    virtual void setDecimateFactor(double factor) = 0;
+    virtual void setQuadSigma(double blur) = 0;
+    virtual void setNumberOfThreads(int i) = 0;
+    virtual void setMaxAllowedHammingDistance(int) = 0;
+    virtual const std::string & getFamily() const = 0;
 };
 }  // namespace apriltag_detector
 #endif  // APRILTAG_DETECTOR__DETECTOR_HPP_
