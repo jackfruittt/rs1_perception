@@ -50,9 +50,9 @@ ${PROJECT_NAME}
 PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 $<INSTALL_INTERFACE:include>)
 
-# Adjusted for rs1_perception
+# Register the perception node component
 rclcpp_components_register_nodes(${PROJECT_NAME}
-"${PROJECT_NAME}::DetectorComponent")
+"rs1_perception::PerceptionNode")
 
 # Adjusted for rs1_perception
 target_link_libraries(rs1_perception
