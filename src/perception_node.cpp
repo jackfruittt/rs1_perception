@@ -135,9 +135,9 @@ void PerceptionNode::subscribe() {
 
     const auto qos_profile = string_to_profile(image_qos_profile_);
 
-    // Subscribe to front camera for AprilTag detection
+    // Subscribe to front camera for AprilTag detection - Edited from front to bottom for Matt testing - can change back/refactor if needed
     front_image_sub_ = std::make_shared<image_transport::Subscriber>(
-                           image_transport::create_subscription(this, "/" + drone_namespace_ + "/front/image",
+                           image_transport::create_subscription(this, "/" + drone_namespace_ + "/bottom/image",
                                                                 std::bind(&PerceptionNode::frontImageCallback, this, std::placeholders::_1),
                                                                 in_transport_, convert_profile(qos_profile)));
 
