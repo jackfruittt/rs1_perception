@@ -341,19 +341,23 @@ geometry_msgs::msg::Point PerceptionNode::calculateAdjustedPosition(const geomet
 
     const double tolerance = position_tolerance_;
 
+    // Compensate for bottom camera 45deg downward angle
+    adjusted_pos.z -= depth_estimate * std::sin(M_PI / 4);
+
+
     // Adjust position based on drone heading (yaw angle)
     if(std::abs(yaw_angle - 0.0) <= tolerance) {
         // Facing positive X direction
-        adjusted_pos.x += depth_estimate;
+        adjusted_pos.x += depth_estimate * std::cos(M_PI / 4);
     } else if(std::abs(yaw_angle - M_PI) <= tolerance || std::abs(yaw_angle + M_PI) <= tolerance) {
         // Facing negative X direction
-        adjusted_pos.x -= depth_estimate;
+        adjusted_pos.x -= depth_estimate * std::cos(M_PI / 4);
     } else if(std::abs(yaw_angle - M_PI_2) <= tolerance) {
         // Facing positive Y direction
-        adjusted_pos.y += depth_estimate;
+        adjusted_pos.y += depth_estimate * std::cos(M_PI / 4);
     } else if(std::abs(yaw_angle + M_PI_2) <= tolerance) {
         // Facing negative Y direction
-        adjusted_pos.y -= depth_estimate;
+        adjusted_pos.y -= depth_estimate * std::cos(M_PI / 4);
     } else {
         // General case - project based on yaw angle
         adjusted_pos.x += depth_estimate * std::cos(yaw_angle);
