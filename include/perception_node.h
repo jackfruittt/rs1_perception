@@ -194,7 +194,8 @@ class PerceptionNode : public rclcpp::Node {
     geometry_msgs::msg::Point calculateAdjustedPosition(
         const geometry_msgs::msg::Point& drone_pos,
         double yaw_angle,
-        double depth_estimate) const;
+        double depth_estimate,
+        const std::vector<cv::Point2f>& tag_centre) const;
 
     /**
      * @brief Publish scenario detection information to mission planner

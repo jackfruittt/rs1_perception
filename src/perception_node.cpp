@@ -281,11 +281,14 @@ void PerceptionNode::tagDetectionCallback(const apriltag_msgs::msg::AprilTagDete
         corners.emplace_back(corner.x, corner.y);
     }
 
+    std::vector<cv::Point2f> centre;
+    centre.emplace_back(first_detection.centre.x, first_detection.centre.y);
+
     double depth_estimate = estimateTagDepth(corners);
 
     // Calculate adjusted target position in world coordinates
     geometry_msgs::msg::Point adjusted_position =
-        calculateAdjustedPosition(current_odom_->pose.pose.position, yaw, depth_estimate);
+        calculateAdjustedPosition(current_odom_->pose.pose.position, yaw, depth_estimate, centre);
 
     // Publish scenario detection
     publishScenarioDetection(detected_scenario, adjusted_position, yaw);
@@ -336,35 +339,70 @@ double PerceptionNode::estimateTagDepth(const std::vector<cv::Point2f>& tag_corn
 }
 
 geometry_msgs::msg::Point PerceptionNode::calculateAdjustedPosition(const geometry_msgs::msg::Point& drone_pos,
-                                                                    double yaw_angle, double depth_estimate) const {
+                                                                    double yaw_angle, double depth_estimate, const std::vector<cv::Point2f>& tag_centre) const {
     geometry_msgs::msg::Point adjusted_pos = drone_pos;
 
     const double tolerance = position_tolerance_;
 
-    // Drone is above the target by the depth estimate
-    adjusted_pos.z -= depth_estimate;  
+    const double image_center_x = 320.0;  // 640px width, Check robot package adaptive urdf
+    const double image_center_y = 180.0;  // 480px height 
+    double base_factor = 0.0044; // m/px for z adjustment at 1m depth with 185.7px focal length
 
-    // Adjust position based on drone heading (yaw angle)
-    if(std::abs(yaw_angle - 0.0) <= tolerance) {
-        // Facing positive X direction
-        adjusted_pos.x += depth_estimate;
-    } else if(std::abs(yaw_angle - M_PI) <= tolerance || std::abs(yaw_angle + M_PI) <= tolerance) {
-        // Facing negative X direction
-        adjusted_pos.x -= depth_estimate;
-    } else if(std::abs(yaw_angle - M_PI_2) <= tolerance) {
-        // Facing positive Y direction
-        adjusted_pos.y += depth_estimate;
-    } else if(std::abs(yaw_angle + M_PI_2) <= tolerance) {
-        // Facing negative Y direction
-        adjusted_pos.y -= depth_estimate;
+    double dpx_x = tag_centre[0].x - image_center_x;
+    double dpx_y = tag_centre[0].y - image_center_y;
+
+    double adjusted_factor = base_factor * depth_estimate;
+
+    // // Converts pixel offsets to metre offsets
+    // adjusted_pos.x += dpx_x * adjusted_factor;
+    // adjusted_pos.y += dpx_y * adjusted_factor; 
+
+    // Drone is above the target by the depth estimate
+    adjusted_pos.z -= depth_estimate;
+    
+    if(tag_centre[0].x > image_center_x && tag_centre[0].y > image_center_y) {
+        RCLCPP_INFO(this->get_logger(), "Tag detected in Top-Left quadrant of image");
+        adjusted_pos.x += dpx_x * adjusted_factor;
+        adjusted_pos.y += dpx_y * adjusted_factor; 
+    } else if(tag_centre[0].x > image_center_x && tag_centre[0].y < image_center_y) {
+        RCLCPP_INFO(this->get_logger(), "Tag detected in Top-Right quadrant of image");
+        adjusted_pos.x -= dpx_x * adjusted_factor;
+        adjusted_pos.y -= dpx_y * adjusted_factor; 
+    } else if(tag_centre[0].x < image_center_x && tag_centre[0].y > image_center_y) {
+        RCLCPP_INFO(this->get_logger(), "Tag detected in Bottom-Left quadrant of image");
+        adjusted_pos.x += dpx_x * adjusted_factor;
+        adjusted_pos.y -= dpx_y * adjusted_factor; 
+    } else if(tag_centre[0].x < image_center_x && tag_centre[0].y < image_center_y) {
+        adjusted_pos.x -= dpx_x * adjusted_factor;
+        adjusted_pos.y += dpx_y * adjusted_factor;
+        RCLCPP_INFO(this->get_logger(), "Tag detected in Bottom-Right quadrant of image");
     } else {
-        // General case - project based on yaw angle
-        adjusted_pos.x += depth_estimate * std::cos(yaw_angle);
-        adjusted_pos.y += depth_estimate * std::sin(yaw_angle);
+        RCLCPP_INFO(this->get_logger(), "Tag detected at centre of image");
     }
 
-    RCLCPP_DEBUG(this->get_logger(), "Position adjusted from [%.2f, %.2f] to [%.2f, %.2f] (yaw: %.2f, depth: %.2f)",
-                 drone_pos.x, drone_pos.y, adjusted_pos.x, adjusted_pos.y, yaw_angle, depth_estimate);
+    // Adjust position estimation based on bottom camera frame when tag is detected using trigonometry and drone yaw angle
+
+    // // Adjust position based on drone heading (yaw angle)
+    // if(std::abs(yaw_angle - 0.0) <= tolerance) {
+    //     // Facing positive X direction
+    //     adjusted_pos.x += depth_estimate;
+    // } else if(std::abs(yaw_angle - M_PI) <= tolerance || std::abs(yaw_angle + M_PI) <= tolerance) {
+    //     // Facing negative X direction
+    //     adjusted_pos.x -= depth_estimate;
+    // } else if(std::abs(yaw_angle - M_PI_2) <= tolerance) {
+    //     // Facing positive Y direction
+    //     adjusted_pos.y += depth_estimate;
+    // } else if(std::abs(yaw_angle + M_PI_2) <= tolerance) {
+    //     // Facing negative Y direction
+    //     adjusted_pos.y -= depth_estimate;
+    // } else {
+    //     // General case - project based on yaw angle
+    //     adjusted_pos.x += depth_estimate * std::cos(yaw_angle);
+    //     adjusted_pos.y += depth_estimate * std::sin(yaw_angle);
+    // }
+
+    RCLCPP_INFO(this->get_logger(), "Position adjusted from [%.2f, %.2f, %.2f] to [%.2f, %.2f, %.2f] (yaw: %.2f, depth: %.2f)",
+                 drone_pos.x, drone_pos.y, drone_pos.z, adjusted_pos.x, adjusted_pos.y, adjusted_pos.z, yaw_angle, depth_estimate);
 
     return adjusted_pos;
 }
