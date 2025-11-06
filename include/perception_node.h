@@ -185,17 +185,14 @@ class PerceptionNode : public rclcpp::Node {
     double estimateTagDepth(const std::vector<cv::Point2f>& tag_corners) const;
 
     /**
-     * @brief Calculate adjusted position coordinates based on drone orientation
+     * @brief Calculate adjusted position coordinates for bottom-facing camera
      * @param drone_pos Current drone position
-     * @param yaw_angle Drone heading angle in radians
-     * @param depth_estimate Estimated distance to target
+     * @param depth_estimate Estimated vertical distance to target (altitude)
      * @return Adjusted target coordinates in world frame
      */
     geometry_msgs::msg::Point calculateAdjustedPosition(
         const geometry_msgs::msg::Point& drone_pos,
-        double yaw_angle,
-        double depth_estimate,
-        const std::vector<cv::Point2f>& tag_centre) const;
+        double depth_estimate) const;
 
     /**
      * @brief Publish scenario detection information to mission planner
@@ -267,10 +264,12 @@ class PerceptionNode : public rclcpp::Node {
     double front_camera_focal_length_;                                                     ///< Front camera focal length (pixels)
     double april_tag_size_;                                                                ///< Physical AprilTag size (metres)
     double position_tolerance_;                                                            ///< Position calculation tolerance
+    double min_detection_interval_;                                                        ///< Minimum time between detections (seconds)
 
     // Thread safety
     std::mutex state_mutex_;                                                               ///< Mutex for thread-safe state access
     std::chrono::steady_clock::time_point last_detection_time_;                            ///< Last detection timestamp
+    std::chrono::steady_clock::time_point last_scenario_publish_time_;                     ///< Last scenario publication timestamp
 };
 
 }  // namespace rs1_perception

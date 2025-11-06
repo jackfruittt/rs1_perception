@@ -90,8 +90,9 @@ PerceptionNode::PerceptionNode(const rclcpp::NodeOptions& options)
                                                      std::bind(&PerceptionNode::subscriptionCheckTimerExpired, this));
 #endif
 
-    // Initialise state tracking
-    last_detection_time_ = std::chrono::steady_clock::now();
+    // Initialise state tracking - set to epoch so first detection publishes immediately
+    last_detection_time_ = std::chrono::steady_clock::time_point{};
+    last_scenario_publish_time_ = std::chrono::steady_clock::time_point{};
 
     RCLCPP_INFO(this->get_logger(), "Perception Node initialised for %s", drone_namespace_.c_str());
     RCLCPP_INFO(this->get_logger(), "AprilTag detector configured - Family: %s, Threads: %d",
@@ -117,6 +118,7 @@ void PerceptionNode::loadPerceptionParams() {
     front_camera_focal_length_ = this->get_parameter_or("front_camera_focal_length", 185.7);
     april_tag_size_ = this->get_parameter_or("april_tag_size", 1.0);
     position_tolerance_ = this->get_parameter_or("position_tolerance", 0.5);
+    min_detection_interval_ = this->get_parameter_or("min_detection_interval", 1.0);  // Default: 1 second between detections
 
     // Validate parameters
     if(front_camera_focal_length_ <= 0.0) {
@@ -124,8 +126,13 @@ void PerceptionNode::loadPerceptionParams() {
         front_camera_focal_length_ = 185.7;
     }
 
-    RCLCPP_INFO(this->get_logger(), "Perception parameters loaded - Focal length: %.1fpx, Tag size: %.2fm",
-                front_camera_focal_length_, april_tag_size_);
+    if(min_detection_interval_ < 0.0) {
+        RCLCPP_WARN(this->get_logger(), "Invalid min_detection_interval %.2f, using default 1.0s", min_detection_interval_);
+        min_detection_interval_ = 1.0;
+    }
+
+    RCLCPP_INFO(this->get_logger(), "Perception parameters loaded - Focal length: %.1fpx, Tag size: %.2fm, Min interval: %.1fs",
+                front_camera_focal_length_, april_tag_size_, min_detection_interval_);
 }
 
 void PerceptionNode::subscribe() {
@@ -135,14 +142,14 @@ void PerceptionNode::subscribe() {
 
     const auto qos_profile = string_to_profile(image_qos_profile_);
 
-    // Subscribe to front camera for AprilTag detection - Edited from front to bottom for Matt testing - can change back/refactor if needed
+    // Subscribe to BOTTOM camera only for AprilTag detection
     front_image_sub_ = std::make_shared<image_transport::Subscriber>(
                            image_transport::create_subscription(this, "/" + drone_namespace_ + "/bottom/image",
                                                                 std::bind(&PerceptionNode::frontImageCallback, this, std::placeholders::_1),
                                                                 in_transport_, convert_profile(qos_profile)));
 
     is_subscribed_ = true;
-    RCLCPP_INFO(this->get_logger(), "Subscribed to front camera image stream");
+    RCLCPP_INFO(this->get_logger(), "Subscribed to BOTTOM camera image stream (front camera disabled)");
 }
 
 void PerceptionNode::unsubscribe() {
@@ -184,6 +191,17 @@ void PerceptionNode::frontImageCallback(const sensor_msgs::msg::Image::ConstShar
         return;
     }
 
+    // Check if enough time has passed since last detection publication BEFORE doing expensive processing
+    auto now = std::chrono::steady_clock::now();
+    auto time_since_last_detection = std::chrono::duration_cast<std::chrono::duration<double>>(now - last_detection_time_).count();
+    
+    if(time_since_last_detection < min_detection_interval_) {
+        RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, 
+                              "Detection throttled - %.2fs since last publication (min: %.2fs)", 
+                              time_since_last_detection, min_detection_interval_);
+        return;
+    }
+
     // Convert ROS image to OpenCV format
     cv_bridge::CvImageConstPtr cv_img;
     try {
@@ -212,11 +230,11 @@ void PerceptionNode::frontImageCallback(const sensor_msgs::msg::Image::ConstShar
 
     // Update statistics and publish results
     num_tags_detected_ += detection_array->detections.size();
-    last_detection_time_ = std::chrono::steady_clock::now();
+    last_detection_time_ = now;
 
     detect_pub_->publish(std::move(detection_array));
 
-    RCLCPP_DEBUG(this->get_logger(), "Processed frame - Total messages: %zu, Total tags: %zu", num_messages_,
+    RCLCPP_INFO(this->get_logger(), "Published detection - Total messages: %zu, Total tags: %zu", num_messages_,
                  num_tags_detected_);
 }
 void PerceptionNode::bottomImageCallback(const sensor_msgs::msg::Image::ConstSharedPtr& msg) {
@@ -256,6 +274,16 @@ void PerceptionNode::tagDetectionCallback(const apriltag_msgs::msg::AprilTagDete
         return;
     }
 
+    // Check if enough time has passed since last scenario publication
+    auto now = std::chrono::steady_clock::now();
+    auto time_since_last_scenario = std::chrono::duration_cast<std::chrono::duration<double>>(now - last_scenario_publish_time_).count();
+    
+    if(time_since_last_scenario < min_detection_interval_) {
+        RCLCPP_DEBUG(this->get_logger(), "Scenario publication throttled - %.2fs since last publication (min: %.2fs)", 
+                     time_since_last_scenario, min_detection_interval_);
+        return;
+    }
+
     // Process first detected tag for scenario recognition
     const auto& first_detection = msg->detections[0];
     int tag_id = first_detection.id;
@@ -268,7 +296,7 @@ void PerceptionNode::tagDetectionCallback(const apriltag_msgs::msg::AprilTagDete
 
     Scenario detected_scenario = static_cast<Scenario>(tag_id);
 
-    // Calculate drone orientation from IMU
+    // Calculate drone orientation from IMU for scenario reporting
     tf2::Quaternion q(current_imu_->orientation.x, current_imu_->orientation.y, current_imu_->orientation.z,
                       current_imu_->orientation.w);
 
@@ -286,12 +314,13 @@ void PerceptionNode::tagDetectionCallback(const apriltag_msgs::msg::AprilTagDete
 
     double depth_estimate = estimateTagDepth(corners);
 
-    // Calculate adjusted target position in world coordinates
+    // Calculate adjusted target position in world coordinates (bottom camera)
     geometry_msgs::msg::Point adjusted_position =
-        calculateAdjustedPosition(current_odom_->pose.pose.position, yaw, depth_estimate, centre);
+        calculateAdjustedPosition(current_odom_->pose.pose.position, depth_estimate);
 
-    // Publish scenario detection
+    // Publish scenario detection and update timestamp
     publishScenarioDetection(detected_scenario, adjusted_position, yaw);
+    last_scenario_publish_time_ = now;
 
     // Subscribe to bottom camera for scenario documentation
     const auto qos_profile = string_to_profile(image_qos_profile_);
@@ -339,70 +368,27 @@ double PerceptionNode::estimateTagDepth(const std::vector<cv::Point2f>& tag_corn
 }
 
 geometry_msgs::msg::Point PerceptionNode::calculateAdjustedPosition(const geometry_msgs::msg::Point& drone_pos,
-                                                                    double yaw_angle, double depth_estimate, const std::vector<cv::Point2f>& tag_centre) const {
+                                                                    double depth_estimate) const {
     geometry_msgs::msg::Point adjusted_pos = drone_pos;
 
-    const double tolerance = position_tolerance_;
-
-    const double image_center_x = 320.0;  // 640px width, Check robot package adaptive urdf
-    const double image_center_y = 180.0;  // 480px height 
-    double base_factor = 0.0044; // m/px for z adjustment at 1m depth with 185.7px focal length
-
-    double dpx_x = tag_centre[0].x - image_center_x;
-    double dpx_y = tag_centre[0].y - image_center_y;
-
-    double adjusted_factor = base_factor * depth_estimate;
-
-    // // Converts pixel offsets to metre offsets
-    // adjusted_pos.x += dpx_x * adjusted_factor;
-    // adjusted_pos.y += dpx_y * adjusted_factor; 
-
-    // Drone is above the target by the depth estimate
-    adjusted_pos.z -= depth_estimate;
+    // For a BOTTOM-FACING camera:
+    // - The tag is directly below the drone (in the camera's field of view)
+    // - Depth estimate is the vertical distance (drone altitude above tag)
+    // - X,Y position of tag is approximately the drone's X,Y position
+    // - Z position of tag is drone_z - depth (tag is below the drone)
     
-    if(tag_centre[0].x > image_center_x && tag_centre[0].y > image_center_y) {
-        RCLCPP_INFO(this->get_logger(), "Tag detected in Top-Left quadrant of image");
-        adjusted_pos.x += dpx_x * adjusted_factor;
-        adjusted_pos.y += dpx_y * adjusted_factor; 
-    } else if(tag_centre[0].x > image_center_x && tag_centre[0].y < image_center_y) {
-        RCLCPP_INFO(this->get_logger(), "Tag detected in Top-Right quadrant of image");
-        adjusted_pos.x -= dpx_x * adjusted_factor;
-        adjusted_pos.y -= dpx_y * adjusted_factor; 
-    } else if(tag_centre[0].x < image_center_x && tag_centre[0].y > image_center_y) {
-        RCLCPP_INFO(this->get_logger(), "Tag detected in Bottom-Left quadrant of image");
-        adjusted_pos.x += dpx_x * adjusted_factor;
-        adjusted_pos.y -= dpx_y * adjusted_factor; 
-    } else if(tag_centre[0].x < image_center_x && tag_centre[0].y < image_center_y) {
-        adjusted_pos.x -= dpx_x * adjusted_factor;
-        adjusted_pos.y += dpx_y * adjusted_factor;
-        RCLCPP_INFO(this->get_logger(), "Tag detected in Bottom-Right quadrant of image");
-    } else {
-        RCLCPP_INFO(this->get_logger(), "Tag detected at centre of image");
-    }
+    // Set tag Z to ground level (drone altitude minus depth to tag)
+    adjusted_pos.z = drone_pos.z - depth_estimate;
+    
+    // For bottom camera, the tag is approximately at the drone's X,Y position
+    // (assuming the tag is centered in the image and drone is hovering above it)
+    // No yaw-based projection needed for downward-facing camera
+    adjusted_pos.x = drone_pos.x;
+    adjusted_pos.y = drone_pos.y;
 
-    // Adjust position estimation based on bottom camera frame when tag is detected using trigonometry and drone yaw angle
-
-    // // Adjust position based on drone heading (yaw angle)
-    // if(std::abs(yaw_angle - 0.0) <= tolerance) {
-    //     // Facing positive X direction
-    //     adjusted_pos.x += depth_estimate;
-    // } else if(std::abs(yaw_angle - M_PI) <= tolerance || std::abs(yaw_angle + M_PI) <= tolerance) {
-    //     // Facing negative X direction
-    //     adjusted_pos.x -= depth_estimate;
-    // } else if(std::abs(yaw_angle - M_PI_2) <= tolerance) {
-    //     // Facing positive Y direction
-    //     adjusted_pos.y += depth_estimate;
-    // } else if(std::abs(yaw_angle + M_PI_2) <= tolerance) {
-    //     // Facing negative Y direction
-    //     adjusted_pos.y -= depth_estimate;
-    // } else {
-    //     // General case - project based on yaw angle
-    //     adjusted_pos.x += depth_estimate * std::cos(yaw_angle);
-    //     adjusted_pos.y += depth_estimate * std::sin(yaw_angle);
-    // }
-
-    RCLCPP_INFO(this->get_logger(), "Position adjusted from [%.2f, %.2f, %.2f] to [%.2f, %.2f, %.2f] (yaw: %.2f, depth: %.2f)",
-                 drone_pos.x, drone_pos.y, drone_pos.z, adjusted_pos.x, adjusted_pos.y, adjusted_pos.z, yaw_angle, depth_estimate);
+    RCLCPP_DEBUG(this->get_logger(), "Bottom camera - Tag position: [%.2f, %.2f, %.2f] (drone at [%.2f, %.2f, %.2f], depth: %.2fm)",
+                 adjusted_pos.x, adjusted_pos.y, adjusted_pos.z, 
+                 drone_pos.x, drone_pos.y, drone_pos.z, depth_estimate);
 
     return adjusted_pos;
 }
