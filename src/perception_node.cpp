@@ -55,13 +55,14 @@ PerceptionNode::PerceptionNode(const rclcpp::NodeOptions& options)
     imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(
                    "/" + drone_namespace_ + "/imu", 10, std::bind(&PerceptionNode::imuCallback, this, std::placeholders::_1));
 
-    detection_sub_ = this->create_subscription<apriltag_msgs::msg::AprilTagDetectionArray>(
-                         "/" + drone_namespace_ + "/tags", 10,
-                         std::bind(&PerceptionNode::tagDetectionCallback, this, std::placeholders::_1));
+    // NOTE: We do NOT subscribe to our own /tags topic to avoid feedback loop
+    // Scenario processing is done directly in frontImageCallback after detection
 
     // Create publishers
     rclcpp::PublisherOptions pub_options;
 #ifdef USE_MATCHED_EVENTS
+    // Disabled: We now always subscribe to camera feed for scenario detection
+    /*
     pub_options.event_callbacks.matched_callback = [this](rclcpp::MatchedInfo & s) {
         if(is_subscribed_) {
             if(s.current_count == 0) {
@@ -73,6 +74,7 @@ PerceptionNode::PerceptionNode(const rclcpp::NodeOptions& options)
             }
         }
     };
+    */
 #endif
 
     detect_pub_ = this->create_publisher<apriltag_msgs::msg::AprilTagDetectionArray>("/" + drone_namespace_ + "/tags", 10,
@@ -93,6 +95,9 @@ PerceptionNode::PerceptionNode(const rclcpp::NodeOptions& options)
     // Initialise state tracking - set to epoch so first detection publishes immediately
     last_detection_time_ = std::chrono::steady_clock::time_point{};
     last_scenario_publish_time_ = std::chrono::steady_clock::time_point{};
+
+    // Always subscribe to camera - we need to detect tags for scenario detection even if nobody subscribes to /tags
+    subscribe();
 
     RCLCPP_INFO(this->get_logger(), "Perception Node initialised for %s", drone_namespace_.c_str());
     RCLCPP_INFO(this->get_logger(), "AprilTag detector configured - Family: %s, Threads: %d",
@@ -171,6 +176,9 @@ void PerceptionNode::unsubscribe() {
 }
 
 void PerceptionNode::subscriptionCheckTimerExpired() {
+    // Disabled: We now always subscribe to camera feed for scenario detection
+    // No longer dependent on /tags subscribers
+    /*
     if(detect_pub_->get_subscription_count() > 0) {
         if(!is_subscribed_) {
             subscribe();
@@ -180,6 +188,7 @@ void PerceptionNode::subscriptionCheckTimerExpired() {
             unsubscribe();
         }
     }
+    */
 }
 
 void PerceptionNode::frontImageCallback(const sensor_msgs::msg::Image::ConstSharedPtr& msg) {
@@ -187,9 +196,8 @@ void PerceptionNode::frontImageCallback(const sensor_msgs::msg::Image::ConstShar
 
     num_messages_++;
 
-    if(detect_pub_->get_subscription_count() == 0) {
-        return;
-    }
+    // Note: Removed subscription check - we always want to detect tags even if nobody is subscribing to /tags
+    // because we need to publish to /scenario_detection
 
     // Check if enough time has passed since last detection publication BEFORE doing expensive processing
     auto now = std::chrono::steady_clock::now();
@@ -228,10 +236,16 @@ void PerceptionNode::frontImageCallback(const sensor_msgs::msg::Image::ConstShar
         return;
     }
 
-    // Update statistics and publish results
+    RCLCPP_INFO(this->get_logger(), "Detected %zu AprilTags in frame", detection_array->detections.size());
+
+    // Update statistics
     num_tags_detected_ += detection_array->detections.size();
     last_detection_time_ = now;
 
+    // Process first detected tag for scenario recognition (before moving the pointer)
+    processScenarioDetection(detection_array.get());
+
+    // Publish detection array (this moves ownership)
     detect_pub_->publish(std::move(detection_array));
 
     RCLCPP_INFO(this->get_logger(), "Published detection - Total messages: %zu, Total tags: %zu", num_messages_,
@@ -265,12 +279,18 @@ void PerceptionNode::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg) {
     RCLCPP_DEBUG(this->get_logger(), "IMU data updated");
 }
 
-void PerceptionNode::tagDetectionCallback(const apriltag_msgs::msg::AprilTagDetectionArray::SharedPtr msg) {
-    std::lock_guard<std::mutex> lock(state_mutex_);
-    current_tags_ = msg;
+void PerceptionNode::processScenarioDetection(const apriltag_msgs::msg::AprilTagDetectionArray* detection_array) {
+    // Note: mutex already locked by frontImageCallback, no need to lock again
 
-    if(!current_odom_ || !current_imu_ || msg->detections.empty()) {
-        RCLCPP_DEBUG(this->get_logger(), "Insufficient data for scenario processing");
+    RCLCPP_INFO(this->get_logger(), "processScenarioDetection called with %zu detections", 
+                detection_array ? detection_array->detections.size() : 0);
+
+    if(!detection_array || !current_odom_ || !current_imu_ || detection_array->detections.empty()) {
+        RCLCPP_WARN(this->get_logger(), "Insufficient data for scenario processing - detection_array=%s, odom=%s, imu=%s, detections=%zu",
+                    detection_array ? "valid" : "null",
+                    current_odom_ ? "valid" : "null", 
+                    current_imu_ ? "valid" : "null",
+                    detection_array && !detection_array->detections.empty() ? detection_array->detections.size() : 0);
         return;
     }
 
@@ -285,7 +305,7 @@ void PerceptionNode::tagDetectionCallback(const apriltag_msgs::msg::AprilTagDete
     }
 
     // Process first detected tag for scenario recognition
-    const auto& first_detection = msg->detections[0];
+    const auto& first_detection = detection_array->detections[0];
     int tag_id = first_detection.id;
 
     // Convert tag ID to scenario enum

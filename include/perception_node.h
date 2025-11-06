@@ -147,9 +147,9 @@ class PerceptionNode : public rclcpp::Node {
 
     /**
      * @brief Process detected AprilTag arrays for scenario recognition
-     * @param msg Array of detected AprilTags with pose information
+     * @param detection_array Array of detected AprilTags with pose information
      */
-    void tagDetectionCallback(const apriltag_msgs::msg::AprilTagDetectionArray::SharedPtr msg);
+    void processScenarioDetection(const apriltag_msgs::msg::AprilTagDetectionArray* detection_array);
 
     // Subscription management methods
     /**
@@ -229,11 +229,10 @@ class PerceptionNode : public rclcpp::Node {
     // Subscriber interfaces
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;                    ///< Drone odometry subscription
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;                       ///< IMU data subscription
-    rclcpp::Subscription<apriltag_msgs::msg::AprilTagDetectionArray>::SharedPtr detection_sub_; ///< AprilTag detection subscription
 
     // Image transport subscriptions
-    std::shared_ptr<image_transport::Subscriber> front_image_sub_;                         ///< Front camera subscription
-    std::shared_ptr<image_transport::Subscriber> bottom_image_sub_;                        ///< Bottom camera subscription (dynamic)
+    std::shared_ptr<image_transport::Subscriber> front_image_sub_;                         ///< Bottom camera subscription (misnamed for historical reasons)
+    std::shared_ptr<image_transport::Subscriber> bottom_image_sub_;                        ///< Bottom camera subscription (dynamic, for scenario documentation)
 
     // Publisher interfaces
     rclcpp::Publisher<apriltag_msgs::msg::AprilTagDetectionArray>::SharedPtr detect_pub_;  ///< AprilTag detection publisher
@@ -250,7 +249,6 @@ class PerceptionNode : public rclcpp::Node {
     // Current state variables
     nav_msgs::msg::Odometry::SharedPtr current_odom_;                                      ///< Latest odometry data
     sensor_msgs::msg::Imu::SharedPtr current_imu_;                                         ///< Latest IMU data
-    apriltag_msgs::msg::AprilTagDetectionArray::SharedPtr current_tags_;                   ///< Latest tag detections
 
     // Detection statistics
     std::size_t num_messages_;                                                             ///< Total processed images
