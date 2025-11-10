@@ -1,0 +1,33 @@
+/*!
+@mainpage Project 1: Horizon Hive - ROS2-based Autonomous Drone Swarm Surveillance System
+ 
+@section overview Overview
+ 
+This package contains the relevant source code for our perception node which uses the ROS2 Apriltag package. 
+This is 1 of 4 packages used for Robotics Studio 1. The perception node is seperated for reusabliility with other robots that may do similar tasks. 
+
+The node this package contains is relevant for ar-tag detection and ar-tag pose estimation relative to the drones position. 
+It also publishes detailed scenario data so drones respond accordingly. 
+ 
+@section features Key Features
+ 
+- **Custom formatted Scenario Topic**: Gives the sceario based off tag ID, x, y, z position, severity, and if the drone should respond
+- **Custom Pin-hole model**: This gives an accurate pose estimate of the tags location relative to the drones position in the world
+- **Controlled Publishing Rate and Cooldowns**: Prevents the perception node from overloading the drone and mission node in rs1_robot which could crash the component container
+ 
+@section architecture System Architecture
+ 
+The system consists of one main ROS2 node:
+ 
+### Perception Node
+- Node managing ROS related perception operations
+ 
+
+ 
+@section authors Authors
+ 
+Jackson Russell
+ 
+@date June 2025
+@version 1.0
+*/

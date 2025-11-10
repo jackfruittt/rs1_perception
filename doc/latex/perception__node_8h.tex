@@ -1,0 +1,75 @@
+\hypertarget{perception__node_8h}{}\doxysection{include/perception\+\_\+node.h File Reference}
+\label{perception__node_8h}\index{include/perception\_node.h@{include/perception\_node.h}}
+
+
+April\+Tag detection and scenario recognition node for autonomous drone operations.  
+
+
+{\ttfamily \#include $<$memory$>$}\newline
+{\ttfamily \#include $<$string$>$}\newline
+{\ttfamily \#include $<$vector$>$}\newline
+{\ttfamily \#include $<$chrono$>$}\newline
+{\ttfamily \#include $<$mutex$>$}\newline
+{\ttfamily \#include \char`\"{}rclcpp/rclcpp.\+hpp\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}sensor\+\_\+msgs/msg/image.\+hpp\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}sensor\+\_\+msgs/msg/imu.\+hpp\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}nav\+\_\+msgs/msg/odometry.\+hpp\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}std\+\_\+msgs/msg/string.\+hpp\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}apriltag\+\_\+msgs/msg/april\+\_\+tag\+\_\+detection\+\_\+array.\+hpp\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}geometry\+\_\+msgs/msg/point.\+hpp\char`\"{}}\newline
+{\ttfamily \#include $<$image\+\_\+transport/image\+\_\+transport.\+hpp$>$}\newline
+{\ttfamily \#include $<$image\+\_\+transport/subscriber.\+hpp$>$}\newline
+{\ttfamily \#include $<$pluginlib/class\+\_\+loader.\+hpp$>$}\newline
+{\ttfamily \#include $<$tf2/\+Linear\+Math/\+Quaternion.\+h$>$}\newline
+{\ttfamily \#include $<$tf2/\+Linear\+Math/\+Matrix3x3.\+h$>$}\newline
+{\ttfamily \#include $<$cv\+\_\+bridge/cv\+\_\+bridge.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}apriltag\+\_\+detector/detector.\+hpp\char`\"{}}\newline
+Include dependency graph for perception\+\_\+node.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{perception__node_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=312pt]{perception__node_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classrs1__perception_1_1PerceptionNode}{rs1\+\_\+perception\+::\+Perception\+Node}}
+\begin{DoxyCompactList}\small\item\em ROS 2 node for April\+Tag detection and emergency scenario recognition. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+ \mbox{\hyperlink{namespacers1__perception}{rs1\+\_\+perception}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum class \mbox{\hyperlink{namespacers1__perception_aa332ee560d696956ad80f6801f0cbc57}{rs1\+\_\+perception\+::\+Scenario}} \{ \mbox{\hyperlink{namespacers1__perception_aa332ee560d696956ad80f6801f0cbc57a2b50ee83d55f81070fdf00a9eaf9f110}{rs1\+\_\+perception\+::\+STRANDED\+\_\+\+HIKER}} = 0
+, \mbox{\hyperlink{namespacers1__perception_aa332ee560d696956ad80f6801f0cbc57a670a7969a5b597f1e39e16d1eefd6c78}{rs1\+\_\+perception\+::\+WILDFIRE}} = 1
+, \mbox{\hyperlink{namespacers1__perception_aa332ee560d696956ad80f6801f0cbc57af7d23cea5983ff915e1bf87da17b55b5}{rs1\+\_\+perception\+::\+DEBRIS\+\_\+\+OBSTRUCTION}} = 2
+ \}
+\begin{DoxyCompactList}\small\item\em Emergency scenario enumeration for detected April\+Tags. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+April\+Tag detection and scenario recognition node for autonomous drone operations. 
+
+This file contains heavily modified code originally from apriltag\+\_\+detector. Modifications made to support custom drone swarm operations. Original copyright retained above.
+
+\begin{DoxyAuthor}{Author}
+Ace Viray 
+
+Jackson Russell ADD AUTHORS HERE AND BELOW 
+\end{DoxyAuthor}
+\begin{DoxyDate}{Date}
+Sep-\/2025 
+\end{DoxyDate}

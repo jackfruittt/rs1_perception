@@ -1,0 +1,149 @@
+\hypertarget{classrs1__perception_1_1PerceptionNode}{}\doxysection{rs1\+\_\+perception\+::Perception\+Node Class Reference}
+\label{classrs1__perception_1_1PerceptionNode}\index{rs1\_perception::PerceptionNode@{rs1\_perception::PerceptionNode}}
+
+
+ROS 2 node for April\+Tag detection and emergency scenario recognition.  
+
+
+
+
+{\ttfamily \#include $<$perception\+\_\+node.\+h$>$}
+
+
+
+Inheritance diagram for rs1\+\_\+perception\+::Perception\+Node\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=252pt]{classrs1__perception_1_1PerceptionNode__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for rs1\+\_\+perception\+::Perception\+Node\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=252pt]{classrs1__perception_1_1PerceptionNode__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classrs1__perception_1_1PerceptionNode_a4610e9a0d98c79db9067efdd323c74d0}{Perception\+Node}} (const rclcpp\+::\+Node\+Options \&options=rclcpp\+::\+Node\+Options())
+\begin{DoxyCompactList}\small\item\em Constructor with configurable node options. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classrs1__perception_1_1PerceptionNode_aae06e2c0a895d39d21f74d592e86248e}{$\sim$\+Perception\+Node}} ()
+\begin{DoxyCompactList}\small\item\em Destructor -\/ cleans up subscriptions and timers. \end{DoxyCompactList}\item 
+auto \mbox{\hyperlink{classrs1__perception_1_1PerceptionNode_a0e1c14bccd0a909f855cac626dc25aec}{get\+Num\+Messages}} () const
+\begin{DoxyCompactList}\small\item\em Get total number of processed images. \end{DoxyCompactList}\item 
+auto \mbox{\hyperlink{classrs1__perception_1_1PerceptionNode_acd64022dffcbe583d64bfe7ebc9f29ed}{get\+Num\+Tags\+Detected}} () const
+\begin{DoxyCompactList}\small\item\em Get total number of detected April\+Tags. \end{DoxyCompactList}\item 
+auto \mbox{\hyperlink{classrs1__perception_1_1PerceptionNode_a26ce7ba64c3398c97078e13a01852ecc}{is\+Subscribed}} () const
+\begin{DoxyCompactList}\small\item\em Check if node is actively subscribed to image topics. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+ROS 2 node for April\+Tag detection and emergency scenario recognition. 
+
+Manages computer vision-\/based perception for drone operations including April\+Tag detection, scenario classification, depth estimation, and multi-\/camera image processing for emergency response missions. 
+
+Definition at line 84 of file perception\+\_\+node.\+h.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classrs1__perception_1_1PerceptionNode_a4610e9a0d98c79db9067efdd323c74d0}\label{classrs1__perception_1_1PerceptionNode_a4610e9a0d98c79db9067efdd323c74d0}} 
+\index{rs1\_perception::PerceptionNode@{rs1\_perception::PerceptionNode}!PerceptionNode@{PerceptionNode}}
+\index{PerceptionNode@{PerceptionNode}!rs1\_perception::PerceptionNode@{rs1\_perception::PerceptionNode}}
+\doxysubsubsection{\texorpdfstring{PerceptionNode()}{PerceptionNode()}}
+{\footnotesize\ttfamily rs1\+\_\+perception\+::\+Perception\+Node\+::\+Perception\+Node (\begin{DoxyParamCaption}\item[{const rclcpp\+::\+Node\+Options \&}]{options = {\ttfamily rclcpp\+:\+:NodeOptions()} }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [explicit]}}
+
+
+
+Constructor with configurable node options. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em options} & ROS 2 node options for composition and configuration \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 25 of file perception\+\_\+node.\+cpp.
+
+\mbox{\Hypertarget{classrs1__perception_1_1PerceptionNode_aae06e2c0a895d39d21f74d592e86248e}\label{classrs1__perception_1_1PerceptionNode_aae06e2c0a895d39d21f74d592e86248e}} 
+\index{rs1\_perception::PerceptionNode@{rs1\_perception::PerceptionNode}!````~PerceptionNode@{$\sim$PerceptionNode}}
+\index{````~PerceptionNode@{$\sim$PerceptionNode}!rs1\_perception::PerceptionNode@{rs1\_perception::PerceptionNode}}
+\doxysubsubsection{\texorpdfstring{$\sim$PerceptionNode()}{~PerceptionNode()}}
+{\footnotesize\ttfamily rs1\+\_\+perception\+::\+Perception\+Node\+::$\sim$\+Perception\+Node (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Destructor -\/ cleans up subscriptions and timers. 
+
+
+
+Definition at line 107 of file perception\+\_\+node.\+cpp.
+
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classrs1__perception_1_1PerceptionNode_a0e1c14bccd0a909f855cac626dc25aec}\label{classrs1__perception_1_1PerceptionNode_a0e1c14bccd0a909f855cac626dc25aec}} 
+\index{rs1\_perception::PerceptionNode@{rs1\_perception::PerceptionNode}!getNumMessages@{getNumMessages}}
+\index{getNumMessages@{getNumMessages}!rs1\_perception::PerceptionNode@{rs1\_perception::PerceptionNode}}
+\doxysubsubsection{\texorpdfstring{getNumMessages()}{getNumMessages()}}
+{\footnotesize\ttfamily auto rs1\+\_\+perception\+::\+Perception\+Node\+::get\+Num\+Messages (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Get total number of processed images. 
+
+\begin{DoxyReturn}{Returns}
+Number of images processed since node startup 
+\end{DoxyReturn}
+
+
+Definition at line 102 of file perception\+\_\+node.\+h.
+
+\mbox{\Hypertarget{classrs1__perception_1_1PerceptionNode_acd64022dffcbe583d64bfe7ebc9f29ed}\label{classrs1__perception_1_1PerceptionNode_acd64022dffcbe583d64bfe7ebc9f29ed}} 
+\index{rs1\_perception::PerceptionNode@{rs1\_perception::PerceptionNode}!getNumTagsDetected@{getNumTagsDetected}}
+\index{getNumTagsDetected@{getNumTagsDetected}!rs1\_perception::PerceptionNode@{rs1\_perception::PerceptionNode}}
+\doxysubsubsection{\texorpdfstring{getNumTagsDetected()}{getNumTagsDetected()}}
+{\footnotesize\ttfamily auto rs1\+\_\+perception\+::\+Perception\+Node\+::get\+Num\+Tags\+Detected (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Get total number of detected April\+Tags. 
+
+\begin{DoxyReturn}{Returns}
+Number of tags detected since node startup 
+\end{DoxyReturn}
+
+
+Definition at line 110 of file perception\+\_\+node.\+h.
+
+\mbox{\Hypertarget{classrs1__perception_1_1PerceptionNode_a26ce7ba64c3398c97078e13a01852ecc}\label{classrs1__perception_1_1PerceptionNode_a26ce7ba64c3398c97078e13a01852ecc}} 
+\index{rs1\_perception::PerceptionNode@{rs1\_perception::PerceptionNode}!isSubscribed@{isSubscribed}}
+\index{isSubscribed@{isSubscribed}!rs1\_perception::PerceptionNode@{rs1\_perception::PerceptionNode}}
+\doxysubsubsection{\texorpdfstring{isSubscribed()}{isSubscribed()}}
+{\footnotesize\ttfamily auto rs1\+\_\+perception\+::\+Perception\+Node\+::is\+Subscribed (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Check if node is actively subscribed to image topics. 
+
+\begin{DoxyReturn}{Returns}
+True if subscribed to image streams 
+\end{DoxyReturn}
+
+
+Definition at line 118 of file perception\+\_\+node.\+h.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/\mbox{\hyperlink{perception__node_8h}{perception\+\_\+node.\+h}}\item 
+src/\mbox{\hyperlink{perception__node_8cpp}{perception\+\_\+node.\+cpp}}\end{DoxyCompactItemize}

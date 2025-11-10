@@ -1,0 +1,23 @@
+\hypertarget{index_overview}{}\doxysection{Overview}\label{index_overview}
+This package contains the relevant source code for our perception node which uses the ROS2 Apriltag package. This is 1 of 4 packages used for Robotics Studio 1. The perception node is seperated for reusabliility with other robots that may do similar tasks.
+
+The node this package contains is relevant for ar-\/tag detection and ar-\/tag pose estimation relative to the drones position. It also publishes detailed scenario data so drones respond accordingly.\hypertarget{index_features}{}\doxysection{Key Features}\label{index_features}
+
+\begin{DoxyItemize}
+\item {\bfseries{Custom formatted Scenario Topic}}\+: Gives the sceario based off tag ID, x, y, z position, severity, and if the drone should respond
+\item {\bfseries{Custom Pin-\/hole model}}\+: This gives an accurate pose estimate of the tags location relative to the drones position in the world
+\item {\bfseries{Controlled Publishing Rate and Cooldowns}}\+: Prevents the perception node from overloading the drone and mission node in rs1\+\_\+robot which could crash the component container
+\end{DoxyItemize}\hypertarget{index_architecture}{}\doxysection{System Architecture}\label{index_architecture}
+The system consists of one main ROS2 node\+:\hypertarget{index_autotoc_md0}{}\doxysubsubsection{Perception Node}\label{index_autotoc_md0}
+
+\begin{DoxyItemize}
+\item Node managing ROS related perception operations
+\end{DoxyItemize}\hypertarget{index_authors}{}\doxysection{Authors}\label{index_authors}
+Jackson Russell
+
+\begin{DoxyDate}{Date}
+June 2025 
+\end{DoxyDate}
+\begin{DoxyVersion}{Version}
+1.\+0 
+\end{DoxyVersion}

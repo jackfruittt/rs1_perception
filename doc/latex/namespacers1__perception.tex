@@ -1,0 +1,64 @@
+\hypertarget{namespacers1__perception}{}\doxysection{rs1\+\_\+perception Namespace Reference}
+\label{namespacers1__perception}\index{rs1\_perception@{rs1\_perception}}
+\doxysubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classrs1__perception_1_1PerceptionNode}{Perception\+Node}}
+\begin{DoxyCompactList}\small\item\em ROS 2 node for April\+Tag detection and emergency scenario recognition. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum class \mbox{\hyperlink{namespacers1__perception_aa332ee560d696956ad80f6801f0cbc57}{Scenario}} \{ \mbox{\hyperlink{namespacers1__perception_aa332ee560d696956ad80f6801f0cbc57a2b50ee83d55f81070fdf00a9eaf9f110}{STRANDED\+\_\+\+HIKER}} = 0
+, \mbox{\hyperlink{namespacers1__perception_aa332ee560d696956ad80f6801f0cbc57a670a7969a5b597f1e39e16d1eefd6c78}{WILDFIRE}} = 1
+, \mbox{\hyperlink{namespacers1__perception_aa332ee560d696956ad80f6801f0cbc57af7d23cea5983ff915e1bf87da17b55b5}{DEBRIS\+\_\+\+OBSTRUCTION}} = 2
+ \}
+\begin{DoxyCompactList}\small\item\em Emergency scenario enumeration for detected April\+Tags. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+rmw\+\_\+qos\+\_\+profile\+\_\+t \mbox{\hyperlink{namespacers1__perception_a0d50e7493170b77360e38c81e0c22dd3}{string\+\_\+to\+\_\+profile}} (const std\+::string \&profile\+\_\+str)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Enumeration Type Documentation}
+\mbox{\Hypertarget{namespacers1__perception_aa332ee560d696956ad80f6801f0cbc57}\label{namespacers1__perception_aa332ee560d696956ad80f6801f0cbc57}} 
+\index{rs1\_perception@{rs1\_perception}!Scenario@{Scenario}}
+\index{Scenario@{Scenario}!rs1\_perception@{rs1\_perception}}
+\doxysubsubsection{\texorpdfstring{Scenario}{Scenario}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{namespacers1__perception_aa332ee560d696956ad80f6801f0cbc57}{rs1\+\_\+perception\+::\+Scenario}}\hspace{0.3cm}{\ttfamily [strong]}}
+
+
+
+Emergency scenario enumeration for detected April\+Tags. 
+
+Defines various emergency scenarios that can be detected via April\+Tag IDs. Each scenario corresponds to a specific tag ID number. \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STRANDED\_HIKER@{STRANDED\_HIKER}!rs1\_perception@{rs1\_perception}}\index{rs1\_perception@{rs1\_perception}!STRANDED\_HIKER@{STRANDED\_HIKER}}}\mbox{\Hypertarget{namespacers1__perception_aa332ee560d696956ad80f6801f0cbc57a2b50ee83d55f81070fdf00a9eaf9f110}\label{namespacers1__perception_aa332ee560d696956ad80f6801f0cbc57a2b50ee83d55f81070fdf00a9eaf9f110}} 
+STRANDED\+\_\+\+HIKER&Person requiring rescue assistance. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{WILDFIRE@{WILDFIRE}!rs1\_perception@{rs1\_perception}}\index{rs1\_perception@{rs1\_perception}!WILDFIRE@{WILDFIRE}}}\mbox{\Hypertarget{namespacers1__perception_aa332ee560d696956ad80f6801f0cbc57a670a7969a5b597f1e39e16d1eefd6c78}\label{namespacers1__perception_aa332ee560d696956ad80f6801f0cbc57a670a7969a5b597f1e39e16d1eefd6c78}} 
+WILDFIRE&Fire hazard requiring immediate response. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{DEBRIS\_OBSTRUCTION@{DEBRIS\_OBSTRUCTION}!rs1\_perception@{rs1\_perception}}\index{rs1\_perception@{rs1\_perception}!DEBRIS\_OBSTRUCTION@{DEBRIS\_OBSTRUCTION}}}\mbox{\Hypertarget{namespacers1__perception_aa332ee560d696956ad80f6801f0cbc57af7d23cea5983ff915e1bf87da17b55b5}\label{namespacers1__perception_aa332ee560d696956ad80f6801f0cbc57af7d23cea5983ff915e1bf87da17b55b5}} 
+DEBRIS\+\_\+\+OBSTRUCTION&Blocked path or debris field. \\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line 70 of file perception\+\_\+node.\+h.
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{namespacers1__perception_a0d50e7493170b77360e38c81e0c22dd3}\label{namespacers1__perception_a0d50e7493170b77360e38c81e0c22dd3}} 
+\index{rs1\_perception@{rs1\_perception}!string\_to\_profile@{string\_to\_profile}}
+\index{string\_to\_profile@{string\_to\_profile}!rs1\_perception@{rs1\_perception}}
+\doxysubsubsection{\texorpdfstring{string\_to\_profile()}{string\_to\_profile()}}
+{\footnotesize\ttfamily rmw\+\_\+qos\+\_\+profile\+\_\+t rs1\+\_\+perception\+::string\+\_\+to\+\_\+profile (\begin{DoxyParamCaption}\item[{const std\+::string \&}]{profile\+\_\+str }\end{DoxyParamCaption})}
+
+
+
+Definition at line 7 of file perception\+\_\+node.\+cpp.
+
