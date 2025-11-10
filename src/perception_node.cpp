@@ -55,13 +55,13 @@ PerceptionNode::PerceptionNode(const rclcpp::NodeOptions& options)
     imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(
                    "/" + drone_namespace_ + "/imu", 10, std::bind(&PerceptionNode::imuCallback, this, std::placeholders::_1));
 
-    // NOTE: We do NOT subscribe to our own /tags topic to avoid feedback loop
+    // NOTE: do NOT subscribe /tags topic to avoid feedback loop
     // Scenario processing is done directly in frontImageCallback after detection
 
     // Create publishers
     rclcpp::PublisherOptions pub_options;
 #ifdef USE_MATCHED_EVENTS
-    // Disabled: We now always subscribe to camera feed for scenario detection
+    // Disabled: always subscribe to camera feed for scenario detection
     /*
     pub_options.event_callbacks.matched_callback = [this](rclcpp::MatchedInfo & s) {
         if(is_subscribed_) {
@@ -96,7 +96,7 @@ PerceptionNode::PerceptionNode(const rclcpp::NodeOptions& options)
     last_detection_time_ = std::chrono::steady_clock::time_point{};
     last_scenario_publish_time_ = std::chrono::steady_clock::time_point{};
 
-    // Always subscribe to camera - we need to detect tags for scenario detection even if nobody subscribes to /tags
+    // Always subscribe to camera - detect tags for scenario detection even if not subscribing to /tags
     subscribe();
 
     RCLCPP_INFO(this->get_logger(), "Perception Node initialised for %s", drone_namespace_.c_str());
@@ -176,7 +176,7 @@ void PerceptionNode::unsubscribe() {
 }
 
 void PerceptionNode::subscriptionCheckTimerExpired() {
-    // Disabled: We now always subscribe to camera feed for scenario detection
+    // Disabled: now always subscribe to camera feed for scenario detection
     // No longer dependent on /tags subscribers
     /*
     if(detect_pub_->get_subscription_count() > 0) {
@@ -196,8 +196,8 @@ void PerceptionNode::frontImageCallback(const sensor_msgs::msg::Image::ConstShar
 
     num_messages_++;
 
-    // Note: Removed subscription check - we always want to detect tags even if nobody is subscribing to /tags
-    // because we need to publish to /scenario_detection
+    // Note: Removed subscription check - want to detect tags even if not subscribing to /tags
+    // need to publish to /scenario_detection
 
     // Check if enough time has passed since last detection publication BEFORE doing expensive processing
     auto now = std::chrono::steady_clock::now();
@@ -391,7 +391,7 @@ geometry_msgs::msg::Point PerceptionNode::calculateAdjustedPosition(const geomet
                                                                     double depth_estimate) const {
     geometry_msgs::msg::Point adjusted_pos = drone_pos;
 
-    // For a BOTTOM-FACING camera:
+    // For BOTTOM-FACING camera:
     // - The tag is directly below the drone (in the camera's field of view)
     // - Depth estimate is the vertical distance (drone altitude above tag)
     // - X,Y position of tag is approximately the drone's X,Y position
@@ -421,7 +421,7 @@ void PerceptionNode::publishScenarioDetection(Scenario scenario_type, const geom
     scenario_msg.data = scenarioToString(scenario_type) + "," + std::to_string(target_position.x) + "," +
                         std::to_string(target_position.y) + "," + std::to_string(target_position.z) + "," +
                         std::to_string(drone_heading) + "," +
-                        "respond:1";  // TODO: Implement response capability assessment
+                        "respond:1";  
 
     scenario_detection_pub_->publish(scenario_msg);
 
