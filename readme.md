@@ -79,7 +79,7 @@ sudo apt install ros-humble-ament-cmake-clang-format
 
 2. Link to rs1_ws (make if not made)
    ```bash
-   mkdir rs1_ws/src
+   mkdir -p rs1_ws/src
    cd rs1_ws/src
    ln -s ~/Software/rs1_perception
 
