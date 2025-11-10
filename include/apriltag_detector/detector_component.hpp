@@ -13,6 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/**
+ * @file perception_node.h
+ * @brief AprilTag detection and scenario recognition node for autonomous drone operations
+ *
+ * This file contains heavily modified code originally from apriltag_detector.
+ * Modifications made to support custom drone swarm operations.
+ * Original copyright retained above.
+ *
+ * @author Ace Viray
+ * @author Jackson Russell
+ * ADD AUTHORS HERE AND BELOW
+ * @date Sep-2025
+ */
+
 #ifndef APRILTAG_DETECTOR__DETECTOR_COMPONENT_HPP_
 #define APRILTAG_DETECTOR__DETECTOR_COMPONENT_HPP_
 
@@ -22,8 +36,10 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
-namespace apriltag_detector
-{
+
+
+
+namespace apriltag_detector {
 using Image = sensor_msgs::msg::Image;
 using svec = std::vector<std::string>;
 using svecvec = std::vector<std::vector<std::string>>;
@@ -32,34 +48,43 @@ using VecImagePtr = std::vector<Image::ConstSharedPtr>;
 using ApriltagArray = apriltag_msgs::msg::AprilTagDetectionArray;
 using VecApriltagArrayPtr = std::vector<ApriltagArray::ConstSharedPtr>;
 
-class DetectorComponent : public rclcpp::Node
-{
-public:
-  using ApriltagArray = apriltag_msgs::msg::AprilTagDetectionArray;
-  using Image = sensor_msgs::msg::Image;
-  explicit DetectorComponent(
-    const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
-  ~DetectorComponent();
-  auto getNumMessages() const { return (num_messages_); }
-  auto getNumTagsDetected() const { return (num_tags_detected_); }
-  auto isSubscribed() const { return (is_subscribed_); }
+class DetectorComponent : public rclcpp::Node {
+  public:
+    using ApriltagArray = apriltag_msgs::msg::AprilTagDetectionArray;
+    using Image = sensor_msgs::msg::Image;
+    explicit DetectorComponent(
+        const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+    ~DetectorComponent();
+    auto getNumMessages() const {
+        return (num_messages_);
+    }
+    auto getNumTagsDetected() const {
+        return (num_tags_detected_);
+    }
+    auto isSubscribed() const {
+        return (is_subscribed_);
+    }
 
-private:
-  void subscribe();
-  void unsubscribe();
-  void subscriptionCheckTimerExpired();
-  void callback(const sensor_msgs::msg::Image::ConstSharedPtr & msg);
-  // ------------------------  variables ------------------------------
-  rclcpp::TimerBase::SharedPtr subscription_check_timer_;
-  rclcpp::Publisher<ApriltagArray>::SharedPtr detect_pub_;
-  std::shared_ptr<image_transport::Subscriber> image_sub_;
-  bool is_subscribed_{false};
-  std::string image_qos_profile_{"default"};
-  std::string in_transport_{"raw"};
-  std::size_t num_messages_{0};
-  std::size_t num_tags_detected_{0};
-  pluginlib::ClassLoader<apriltag_detector::Detector> detector_loader_;
-  std::shared_ptr<apriltag_detector::Detector> detector_;
+  private:
+    void subscribe();
+    void unsubscribe();
+    void subscriptionCheckTimerExpired();
+    void callback(const sensor_msgs::msg::Image::ConstSharedPtr & msg);
+    // ------------------------  variables ------------------------------
+    rclcpp::TimerBase::SharedPtr subscription_check_timer_;
+    rclcpp::Publisher<ApriltagArray>::SharedPtr detect_pub_;
+    std::shared_ptr<image_transport::Subscriber> image_sub_;
+    bool is_subscribed_{false};
+    std::string image_qos_profile_{"default"};
+    std::string in_transport_{"raw"};
+    std::size_t num_messages_{0};
+    std::size_t num_tags_detected_{0};
+    pluginlib::ClassLoader<apriltag_detector::Detector> detector_loader_;
+    std::shared_ptr<apriltag_detector::Detector> detector_;
+
+    // Configuration parameters for dynamic namespace support
+    std::string drone_namespace_;                    ///< ROS namespace for this drone
+
 };
 
 }  // namespace apriltag_detector

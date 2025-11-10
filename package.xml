@@ -2,22 +2,57 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>rs1_perception</name>
-  <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="aceviray5@gmail.com">ace-rv</maintainer>
-  <license>TODO: License declaration</license>
+  <version>1.0.0</version>
+  <description>
+    AprilTag detection and scenario recognition node for autonomous drone operations.
+    This package provides computer vision-based perception capabilities for the RS1 drone system,
+    including AprilTag detection, emergency scenario classification, and multi-camera image processing.
+    
+    Contains heavily modified code originally from apriltag_detector by Bernd Pfrommer.
+  </description>
+  <maintainer email="aceviray5@gmail.com">Ace Viray</maintainer>
+  <maintainer email="jackfruittt@users.noreply.github.com">Jackson Russell</maintainer>
+  
+  <license>Apache-2.0</license>
+  
+  <author email="bernd.pfrommer@gmail.com">Bernd Pfrommer</author>
+  <author email="aceviray5@gmail.com">Ace Viray</author>
+  <author email="jackfruittt@users.noreply.github.com">Jackson Russell</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <!-- Core ROS dependencies -->
   <depend>rclcpp</depend>
-  <depend>sensor_msgs</depend>
+  <depend>rclcpp_components</depend>
+  
+  <!-- Message dependencies -->
   <depend>geometry_msgs</depend>
   <depend>std_msgs</depend>
-  <depend>ament_cmake</depend>
-  <depend>rclcpp_components</depend>
+  <depend>nav_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>tf2_geometry_msgs</depend>
+  
+  <!-- AprilTag detection dependencies -->
+  <depend>apriltag</depend>
+  <depend>apriltag_msgs</depend>
+  
+  <!-- Computer vision dependencies -->
+  <depend>cv_bridge</depend>
+  <depend>image_transport</depend>
+  
+  <!-- Transform dependencies -->
+  <depend>tf2</depend>
+  
+  <!-- Plugin system -->
+  <depend>pluginlib</depend>
+
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
+  <test_depend>ament_cmake_clang_format</test_depend>
+
+
+  <buildtool_depend>ros_environment</buildtool_depend>  <!-- ROS_VERSION + ROS_DISTRO -->
 
   <export>
     <build_type>ament_cmake</build_type>
