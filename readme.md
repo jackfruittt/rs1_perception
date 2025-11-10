@@ -51,7 +51,11 @@ rs1_perception/
 ### ROS2 Dependencies
 Install the required AprilTag packages:
 ```bash
-sudo apt install ros-humble-apriltag-detector ros-humble-apriltag-detector-mit ros-humble-apriltag-detector-umich
+sudo apt install ros-humble-apriltag-*
+```
+Install CMake Clang format to build the arpril_tag detectgor package which this uses
+```bash
+sudo apt install ros-humble-ament-cmake-clang-format
 ```
 
 ### Package Dependencies
@@ -64,18 +68,32 @@ sudo apt install ros-humble-apriltag-detector ros-humble-apriltag-detector-mit r
 - `tf2` & `tf2_geometry_msgs`
 - `pluginlib`
 
-## Installation
+## Installation (Make sure dependencies are installed)
 
-1. Clone this package into your ROS2 workspace:
-```bash
-cd ~/your_ws/src
-git clone https://github.com/jackfruittt/rs1_perception.git
-```
+1. Clone this package into a Software directory (make one if not done):
+  ```bash
+  mkdir Software
+  cd ~/Software
+  git clone https://github.com/jackfruittt/rs1_perception.git
+  ```
+
+2. Link to rs1_ws (make if not made)
+   ```bash
+   mkdir rs1_ws/src
+   cd rs1_ws/src
+   ln -s ~/Software/rs1_perception
+
+3. IMPORTANT: This package requires a local copy of apriltag_detector which needs to be cloned)
+   ```bash
+   cd ~/Software
+   git clone https://github.com/ros-misc-utilities/apriltag_detector.git
+   cd ~/rs1_ws/src
+   ln -s ~/Software/apriltag_detector/
 
 2. Build the package:
 ```bash
-cd ~/your_ws
-colcon build --packages-select rs1_perception
+cd ~/rs1_ws
+colcon build
 source install/setup.bash
 ```
 
